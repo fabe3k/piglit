@@ -69,7 +69,7 @@ def import_glsl_parser_tests(group, basepath, subdirectories):
             for f in filenames:
                 # Add f as a test if its file extension is good.
                 ext = f.rsplit('.')[-1]
-                if ext in ['vert', 'geom', 'frag', 'comp']:
+                if ext in ['vert', 'tesc', 'tese', 'geom', 'frag', 'comp']:
                     filepath = path.join(dirpath, f)
                     # testname := filepath relative to
                     # basepath.
@@ -85,9 +85,9 @@ class GLSLParserTest(PlainExecTest):
 
     This test takes a GLSL source file and passes it to the executable
     ``glslparsertest``. The GLSL source file being tested must have a GLSL
-    file extension: one of ``.vert``, ``.geom``, or ``.frag``. The test file
-    must have a properly formatted comment section containing configuration
-    data (see below).
+    file extension: one of ``.vert``, ``.tesc``, ``.tese``, ``.geom``,
+    ``.frag`` or ``.comp``. The test file must have a properly formatted comment section
+    containing configuration data (see below).
 
     For example test files, see the directory
     'piglit.repo/examples/glsl_parser_text`.
@@ -189,7 +189,8 @@ class GLSLParserTest(PlainExecTest):
 
     def __init__(self, filepath, runConcurrent=True):
         """
-        :filepath: Must end in one '.vert', '.geom', or '.frag'.
+        :filepath: Must end in one '.vert', '.tesc', '.tese', '.geom',
+                  '.frag' or '.comp'.
         """
         Test.__init__(self, runConcurrent)
         self.__config = None
