@@ -1439,6 +1439,7 @@ add_plain_test(arb_point_sprite, 'point-sprite')
 arb_tessellation_shader = Group()
 spec['ARB_tessellation_shader'] = arb_tessellation_shader
 add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-get')
+add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-get-tcs-params')
 add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-get-tes-params')
 
 # Group ARB_texture_multisample
