@@ -10,5 +10,6 @@ link_libraries (
 )
 
 piglit_add_executable (arb_tessellation_shader-get get.c)
+piglit_add_executable (arb_tessellation_shader-get-tes-params get-tes-params.c)
 
 # vim: ft=cmake:
