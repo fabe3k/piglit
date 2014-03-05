@@ -1444,6 +1444,7 @@ add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-get-tes-pa
 add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-invalid-invalid-get-program-params')
 add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-invalid-patch-vertices-range')
 add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-invalid-primitive')
+add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-large-uniforms')
 import_glsl_parser_tests(arb_tessellation_shader,
                          os.path.join(testsDir, 'spec',
                          'arb_tessellation_shader'), ['compiler', 'linker'])
