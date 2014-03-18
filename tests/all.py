@@ -1446,7 +1446,7 @@ add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-invalid-pa
 add_concurrent_test(arb_tessellation_shader, 'arb_tessellation_shader-invalid-primitive')
 import_glsl_parser_tests(arb_tessellation_shader,
                          os.path.join(testsDir, 'spec',
-                         'arb_tessellation_shader'), ['compiler'])
+                         'arb_tessellation_shader'), ['compiler', 'linker'])
 
 # Group ARB_texture_multisample
 samplers_atm = ['sampler2DMS', 'isampler2DMS', 'usampler2DMS',
