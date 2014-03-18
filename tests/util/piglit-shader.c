@@ -119,6 +119,10 @@ shader_name(GLenum target)
    case GL_VERTEX_SHADER:
       return "vertex";
 #if defined PIGLIT_USE_OPENGL
+   case GL_TESS_CONTROL_SHADER:
+      return "tessellation control";
+   case GL_TESS_EVALUATION_SHADER:
+      return "tessellation evaluation";
    case GL_GEOMETRY_SHADER:
       return "geometry";
 #endif
