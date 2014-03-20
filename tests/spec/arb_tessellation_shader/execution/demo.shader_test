@@ -1,0 +1,64 @@
+[require]
+GLSL >= 1.50
+GL_ARB_tessellation_shader
+
+
+[vertex shader]
+
+in vec2 vertex;
+
+void main()
+{
+	gl_Position = vec4(vertex, 0, 1);
+}
+
+
+[tessellation control shader]
+#extension GL_ARB_tessellation_shader: require
+layout(vertices = 4) out;
+
+uniform vec4 tessf;
+
+patch out vec4 pos[3];
+
+void main() {
+	pos[0] = gl_in[0].gl_Position;
+	pos[1] = gl_in[1].gl_Position;
+	pos[2] = gl_in[2].gl_Position;
+	gl_TessLevelOuter = float[4](tessf.x, tessf.y, tessf.z, 0.0);
+	gl_TessLevelInner = float[2](tessf.w, 0.0);
+}
+
+
+[tessellation evaluation shader]
+#extension GL_ARB_tessellation_shader: require
+layout(triangles, point_mode) in;
+
+patch in vec4 pos[3];
+
+void main() {
+	gl_Position = pos[0] * gl_TessCoord[0]
+		    + pos[1] * gl_TessCoord[1]
+		    + pos[2] * gl_TessCoord[2];
+	gl_PointSize = 6.0;
+}
+
+
+[fragment shader]
+void main()
+{
+	gl_FragColor = vec4(0.2, 0.2, 1.0, 1.0);
+}
+
+[vertex data]
+vertex/float/2
+-0.9 -0.9
+ 0.9 -0.9
+ 0.0  0.9
+
+[test]
+clear color 0 0 0 1
+clear
+enable GL_PROGRAM_POINT_SIZE
+uniform vec4 tessf 1 2 3 4
+draw arrays GL_PATCHES 0 3
