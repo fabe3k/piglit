@@ -68,6 +68,15 @@ class ParserTest(object):
         else:
             return self.__signature.version_introduced
 
+    def extensions(self):
+        """Return a list containing any extension requirements that
+        the test has.
+        """
+        ext = []
+        if self.__signature.extension:
+            ext.append(self.__signature.extension)
+        return ext
+
     def version_directive(self):
         return '#version {0}\n'.format(self.glsl_version())
 
@@ -77,13 +86,6 @@ class ParserTest(object):
         empty string by default.
         """
         return ''
-
-    def additional_extensions(self):
-        """Return a list (or other iterable) containing any additional
-        extension requirements that the test has.  Returns the empty
-        list by default.
-        """
-        return []
 
     @abc.abstractmethod
     def test_suffix(self):
@@ -147,8 +149,8 @@ class ParserTest(object):
     def make_shader(self):
         """Generate the shader code necessary to test the built-in."""
         shader = self.version_directive()
-        if self.__signature.extension:
-            shader += '#extension GL_{0} : require\n'.format(self.__signature.extension)
+        for ext in self.extensions():
+            shader += '#extension GL_{0} : require\n'.format(ext)
         shader += self.additional_declarations()
         shader += '\n'
         shader += 'void main()\n'
@@ -166,8 +168,8 @@ class ParserTest(object):
     def filename(self):
         argtype_names = '-'.join(
             str(argtype) for argtype in self.__signature.argtypes)
-        if self.__signature.extension:
-            subdir = self.__signature.extension
+        if self.extensions():
+            subdir = self.extensions()[0]
         else:
             subdir = 'glsl-{0:1.2f}'.format(float(self.glsl_version()) / 100)
         return os.path.join(
@@ -181,10 +183,9 @@ class ParserTest(object):
         parser_test += ' * expect_result: pass\n'
         parser_test += ' * glsl_version: {0:1.2f}\n'.format(
             float(self.glsl_version()) / 100)
-        req_extensions = list(self.additional_extensions())
-        if req_extensions:
+        if self.extensions():
             parser_test += ' * require_extensions: {0}\n'.format(
-                ' '.join(req_extensions))
+                ' '.join(['GL_' + x for x in self.extensions()]))
         parser_test += ' * [end config]\n'
         parser_test += ' *\n'
         parser_test += ' * Check that the following test vectors are constant'\
@@ -210,6 +211,41 @@ class VertexParserTest(ParserTest):
     """
     def test_suffix(self):
         return 'vert'
+
+    def output_var(self):
+        return 'gl_Position'
+
+
+class TessellationParserTest(ParserTest):
+    """Abstract class for tests that exercise the built-in in tessellation
+    shaders.
+    """
+    def glsl_version(self):
+	return max(150, ParserTest.glsl_version(self))
+
+    def extensions(self):
+        ext = ParserTest.extensions(self)
+        ext.append('ARB_tessellation_shader')
+        return ext
+
+
+class TessCtrlParserTest(TessellationParserTest):
+    """Derived class for tests that exercise the built-in in a tessellation
+    control shader.
+    """
+    def test_suffix(self):
+        return 'tesc'
+
+    def output_var(self):
+        return 'gl_out[gl_InvocationID].gl_Position'
+
+
+class TessEvalParserTest(TessellationParserTest):
+    """Derived class for tests that exercise the built-in in a tessellation
+    evaluation shader.
+    """
+    def test_suffix(self):
+        return 'tese'
 
     def output_var(self):
         return 'gl_Position'
@@ -243,6 +279,8 @@ class FragmentParserTest(ParserTest):
 def all_tests():
     for signature, test_vectors in sorted(test_suite.items()):
         yield VertexParserTest(signature, test_vectors)
+        yield TessCtrlParserTest(signature, test_vectors)
+        yield TessEvalParserTest(signature, test_vectors)
         yield GeometryParserTest(signature, test_vectors)
         yield FragmentParserTest(signature, test_vectors)
 
