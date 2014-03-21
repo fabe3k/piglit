@@ -664,6 +664,49 @@ void main() {
         return shader
 
 
+class TessEvalShaderTest(TessellationShaderTest):
+    """Derived class for tests that exercise the built-in in a
+    tessellation evaluation shader.
+    """
+
+    def test_prefix(self):
+        return 'tes'
+
+    def make_tess_ctrl_shader(self):
+        shader = \
+"""#extension GL_ARB_tessellation_shader : require
+layout(vertices = 3) out;
+
+in vec4 vertex_to_tcs[];
+out vec4 vertex_to_tes[3];
+void main() {
+  vertex_to_tes[gl_InvocationID] = vertex_to_tcs[gl_InvocationID];
+  gl_TessLevelOuter = float[4](1.0, 1.0, 1.0, 1.0);
+  gl_TessLevelInner = float[2](1.0, 1.0);
+}
+"""
+        return shader
+
+    def make_tess_eval_shader(self):
+        additional_declarations = \
+"""layout(quads) in;
+in vec4 vertex_to_tes[];
+out vec4 color_to_fs;
+"""
+        body = \
+"""  gl_Position = vertex_to_tes[1]
+              + (vertex_to_tes[0] - vertex_to_tes[1]) * gl_TessCoord[0]
+              + (vertex_to_tes[2] - vertex_to_tes[1]) * gl_TessCoord[1];
+  color_to_fs = tmp_color;
+"""
+        shader = self.make_test_shader(
+            additional_declarations,
+            '  vec4 tmp_color;\n',
+            'tmp_color',
+            body)
+        return shader
+
+
 class GeometryShaderTest(ShaderTest):
     """Derived class for tests that exercise the built-in in a
     geometry shader.
@@ -747,6 +790,7 @@ def all_tests():
                 continue
             yield VertexShaderTest(signature, test_vectors, use_if)
             yield TessCtrlShaderTest(signature, test_vectors, use_if)
+            yield TessEvalShaderTest(signature, test_vectors, use_if)
             yield GeometryShaderTest(signature, test_vectors, use_if)
             yield FragmentShaderTest(signature, test_vectors, use_if)
 
