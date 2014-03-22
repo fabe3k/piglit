@@ -1,0 +1,66 @@
+# Spawn 16 tessellation control shader threads per patch. For each patch only
+# one thread writes a thread dependant value to the color output varying.
+[require]
+GLSL >= 1.50
+GL_ARB_tessellation_shader
+
+
+[vertex shader]
+void main()
+{
+	gl_Position = vec4(0);
+}
+
+
+[tessellation control shader]
+#extension GL_ARB_tessellation_shader: require
+layout(vertices = 16) out;
+
+patch out vec4 color;
+
+void main() {
+	if (gl_InvocationID == gl_PrimitiveID)
+		color = vec4(gl_InvocationID - gl_PrimitiveID,
+		             1.0,
+		             gl_PrimitiveID - gl_InvocationID,
+		             1.0);
+	gl_TessLevelOuter = float[4](1.0, 1.0, 1.0, 1.0);
+	gl_TessLevelInner = float[2](0.0, 0.0);
+}
+
+
+[tessellation evaluation shader]
+#extension GL_ARB_tessellation_shader: require
+layout(quads) in;
+
+patch in vec4 color;
+
+out vec4 vert_color;
+
+void main() {
+	vec2[3] pos = vec2[3](
+		vec2(float(gl_PrimitiveID / 4) / 2.0 - 1.0,
+		float(gl_PrimitiveID % 4) / 2.0 - 1.0),
+		vec2(float(gl_PrimitiveID / 4) / 2.0 - 0.5,
+		float(gl_PrimitiveID % 4) / 2.0 - 1.0),
+		vec2(float(gl_PrimitiveID / 4) / 2.0 - 1.0,
+		float(gl_PrimitiveID % 4) / 2.0 - 0.5)
+	);
+	gl_Position = vec4(pos[0]
+	            + (pos[1] - pos[0]) * gl_TessCoord[0]
+	            + (pos[2] - pos[0]) * gl_TessCoord[1], 0.0, 1.0);
+	vert_color = color;
+}
+
+[fragment shader]
+in vec4 vert_color;
+
+void main()
+{
+	gl_FragColor = vert_color;
+}
+
+[test]
+patch parameter vertices 16
+draw arrays GL_PATCHES 0 256
+probe all rgba 0.0 1.0 0.0 1.0
