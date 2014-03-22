@@ -1,0 +1,81 @@
+# Test reading of tessellation levels in tessellation evaluation shader
+# with triangles.
+#
+# From the ARB_tessellation_shader spec (Section 2.X.3.2, Tessellation
+#                                        Evaluation Shader Inputs):
+#
+#       Tessellation level values loaded in these variables will be prior to
+#       the clamping and rounding operations performed by the primitive
+#       generator as described in Section 2.X.2.  For triangular tessellation,
+#       gl_TessLevelOuter[3] and gl_TessLevelInner[1] will be undefined.  For
+#       isoline tessellation, gl_TessLevelOuter[2], gl_TessLevelOuter[3], and
+#       both values in gl_TessLevelInner[] are undefined.
+#
+[require]
+GLSL >= 1.50
+GL_ARB_tessellation_shader
+
+
+[vertex shader]
+in vec4 vertex;
+
+void main()
+{
+	gl_Position = vertex;
+}
+
+
+[tessellation control shader]
+#extension GL_ARB_tessellation_shader: require
+layout(vertices = 3) out;
+
+void main() {
+	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+
+	gl_TessLevelOuter = float[4](1.0, 2.5, 65.0, -1.0);
+	gl_TessLevelInner = float[2](-2.0, -3.0);
+}
+
+
+[tessellation evaluation shader]
+#extension GL_ARB_tessellation_shader: require
+layout(triangles) in;
+
+out vec4 vert_color;
+
+void main() {
+	const vec4 green = vec4(0.0, 1.0, 0.0, 1.0);
+	const vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
+
+	gl_Position = gl_in[0].gl_Position * gl_TessCoord[0]
+	            + gl_in[1].gl_Position * gl_TessCoord[1]
+	            + gl_in[2].gl_Position * gl_TessCoord[2];
+
+	vert_color = green;
+	if (gl_TessLevelOuter[0] != 1.0 ||
+	    gl_TessLevelOuter[1] != 2.5 ||
+	    gl_TessLevelOuter[2] != 65.0 ||
+	    gl_TessLevelInner[0] != -2.0)
+		vert_color = red;
+}
+
+
+[fragment shader]
+in vec4 vert_color;
+void main()
+{
+	gl_FragColor = vert_color;
+}
+
+[vertex data]
+vertex/float/2
+-1.0 -1.0
+ 1.0 -1.0
+-1.0  1.0
+ 1.0  1.0
+-1.0  1.0
+ 1.0 -1.0
+
+[test]
+draw arrays GL_PATCHES 0 6
+probe all rgba 0.0 1.0 0.0 1.0
