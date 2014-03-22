@@ -34,6 +34,9 @@ piglit_make_generated_tests(
 	tcs_input_tests.list
 	gen_tcs_input_tests.py)
 piglit_make_generated_tests(
+	tes_input_tests.list
+	gen_tes_input_tests.py)
+piglit_make_generated_tests(
 	interpolation_tests.list
 	gen_interpolation_tests.py)
 piglit_make_generated_tests(
@@ -84,6 +87,7 @@ add_custom_target(gen-tests ALL
 		builtin_cl_relational_tests.list
 		cl_store_tests.list
 		tcs_input_tests.list
+		tes_input_tests.list
 		interpolation_tests.list
 		non-lvalue_tests.list
 		texture_query_lod_tests.list
