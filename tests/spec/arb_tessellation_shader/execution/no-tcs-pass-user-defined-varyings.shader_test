@@ -1,0 +1,73 @@
+# Pass user defined varyings from vertex to tessellation evaluation shader
+# with no (user defined) tessellation control shader in between.
+[require]
+GLSL >= 1.50
+GL_ARB_tessellation_shader
+
+
+[vertex shader]
+in vec4 vertex;
+
+out int vertex_id;
+out int seventeen;
+out int minus_vertex_id;
+
+void main()
+{
+	gl_Position = vertex;
+
+	vertex_id = gl_VertexID;
+	seventeen = 17;
+	minus_vertex_id = -gl_VertexID;
+}
+
+
+[tessellation evaluation shader]
+#extension GL_ARB_tessellation_shader: require
+layout(triangles) in;
+
+in int vertex_id[];
+in int seventeen[];
+in int minus_vertex_id[];
+
+out vec4 vert_color;
+
+void main() {
+	const vec4 green = vec4(0, 1, 0, 1);
+	const vec4 red = vec4(1, 0, 0, 1);
+	gl_Position = gl_in[0].gl_Position * gl_TessCoord[0]
+	            + gl_in[1].gl_Position * gl_TessCoord[1]
+	            + gl_in[2].gl_Position * gl_TessCoord[2];
+
+	vert_color = green;
+	for (int i = 0; i < 3; ++i) {
+		if (vertex_id[i] != gl_PrimitiveID * 3 + i)
+			vert_color = red;
+		if (seventeen[i] != 17)
+			vert_color = red;
+		if (minus_vertex_id[i] != -(gl_PrimitiveID * 3 + i))
+			vert_color = red;
+	}
+}
+
+
+[fragment shader]
+in vec4 vert_color;
+
+void main()
+{
+	gl_FragColor = vert_color;
+}
+
+[vertex data]
+vertex/float/2
+-1.0 -1.0
+ 1.0 -1.0
+-1.0  1.0
+-1.0  1.0
+ 1.0 -1.0
+ 1.0  1.0
+
+[test]
+draw arrays GL_PATCHES 0 6
+probe all rgba 0.0 1.0 0.0 1.0

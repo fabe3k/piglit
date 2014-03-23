@@ -1,0 +1,68 @@
+# Pass built-in varyings from vertex to tessellation evaluation shader with
+# no (user defined) tessellation control shader in between.
+[require]
+GLSL >= 1.50
+GL_ARB_tessellation_shader
+
+
+[vertex shader]
+in vec4 vertex;
+
+void main()
+{
+	gl_Position = vertex;
+
+	for (int i = 0; i < 8; ++i)
+		gl_ClipDistance[i] = float(gl_VertexID * 10 + i);
+	gl_PointSize = float(gl_VertexID * 10 + 8);
+	gl_Position.w = float(gl_VertexID * 10 + 9);
+}
+
+
+[tessellation evaluation shader]
+#extension GL_ARB_tessellation_shader: require
+layout(triangles) in;
+
+out vec4 vert_color;
+
+void main() {
+	const vec4 green = vec4(0, 1, 0, 1);
+	const vec4 red = vec4(1, 0, 0, 1);
+	gl_Position = gl_in[0].gl_Position * gl_TessCoord[0]
+	            + gl_in[1].gl_Position * gl_TessCoord[1]
+	            + gl_in[2].gl_Position * gl_TessCoord[2];
+	gl_Position.w = 1.0;
+
+	vert_color = green;
+	for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 8; ++j)
+			if (gl_in[i].gl_ClipDistance[j] != float((gl_PrimitiveID * 3 + i) * 10 + j))
+				vert_color = red;
+		if (gl_in[i].gl_PointSize != float((gl_PrimitiveID * 3 + i) * 10 + 8))
+			vert_color = red;
+		if (gl_in[i].gl_Position.w != float((gl_PrimitiveID * 3 + i) * 10 + 9))
+			vert_color = red;
+	}
+}
+
+
+[fragment shader]
+in vec4 vert_color;
+
+void main()
+{
+	gl_FragColor = vert_color;
+}
+
+[vertex data]
+vertex/float/2
+-1.0 -1.0
+ 1.0 -1.0
+-1.0  1.0
+-1.0  1.0
+ 1.0 -1.0
+ 1.0  1.0
+
+[test]
+draw arrays GL_PATCHES 0 6
+probe all rgba 0.0 1.0 0.0 1.0
