@@ -1,0 +1,65 @@
+# Try reading from more vertices in the tessellation evaluation shader than
+# the tessellation control shader emits.
+#
+# From the ARB_tessellation_shader spec (Section 2.X.3.2, Tessellation
+#                                        Evaluation Shader Inputs):
+#
+#       Behavior is undefined if gl_in[] is indexed with a
+#       vertex index greater than or equal to the current patch size.
+#
+# So just test that the test doesn't crash.
+#
+[require]
+GLSL >= 1.50
+GL_ARB_tessellation_shader
+
+
+[vertex shader]
+void main()
+{
+	gl_Position = vec4(0);
+}
+
+
+[tessellation control shader]
+#extension GL_ARB_tessellation_shader: require
+layout(vertices = 1) out;
+
+uniform float tessl;
+
+void main() {
+	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+	gl_TessLevelOuter = float[4](tessl, tessl, tessl, 0.0);
+	gl_TessLevelInner = float[2](tessl, 0.0);
+}
+
+
+[tessellation evaluation shader]
+#extension GL_ARB_tessellation_shader: require
+layout(triangles) in;
+
+void main() {
+	gl_Position = vec4(0);
+	for (int i = 0; i < 32; ++i)
+		gl_Position += gl_in[i].gl_Position * gl_TessCoord[i % 3];
+}
+
+
+[fragment shader]
+void main()
+{
+	gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+}
+
+[test]
+patch parameter vertices 1
+uniform float tessl 1.0
+draw arrays GL_PATCHES 0 256
+draw arrays GL_PATCHES 0 512
+draw arrays GL_PATCHES 0 1024
+draw arrays GL_PATCHES 0 2048
+uniform float tessl 64.0
+draw arrays GL_PATCHES 0 256
+draw arrays GL_PATCHES 0 512
+draw arrays GL_PATCHES 0 1024
+draw arrays GL_PATCHES 0 2048
